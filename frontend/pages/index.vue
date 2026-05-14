@@ -57,7 +57,7 @@ const navigation = computed(() => [
       <div class="p-4 border-t border-gray-800 flex justify-center md:justify-start items-center">
         <UAvatar src="https://avatars.githubusercontent.com/u/739984?v=4" alt="User" size="sm" />
         <div class="ml-3 hidden md:block">
-          <p class="text-sm font-medium text-white">Lead Quant</p>
+          <p class="text-sm font-medium text-white">Lead Dev</p>
           <p class="text-xs text-gray-500">System Admin</p>
         </div>
       </div>
