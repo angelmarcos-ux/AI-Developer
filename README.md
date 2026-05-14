@@ -250,7 +250,8 @@ This prototype is designed as a foundation. Here's how it could plug into larger
 
 ### Database Persistence
 
-- Replace in-memory `history` list with **PostgreSQL** or **MongoDB**.
+- Currently implemented using **SQLite** via SQLAlchemy ORM for robust data storage.
+- Easily swappable to **PostgreSQL** or **MySQL** by changing the `DATABASE_URL` environment variable for production deployments.
 - Enables analytics dashboards: classification distribution, average confidence, response times.
 - Full audit trail for compliance.
 
@@ -269,8 +270,8 @@ This prototype is designed as a foundation. Here's how it could plug into larger
 | **FastAPI** | Modern async architecture, built-in validation via Pydantic, and automatic Swagger docs. Replaces the old Flask implementation to provide true enterprise-grade scalability. |
 | **Nuxt 3** | Modern Vue 3 framework with built-in dev proxy (`nitro.devProxy`), file-based routing, and composables. Ready for SSR if needed later. |
 | **GPT-4o-mini** | Cost-effective for classification tasks (~10x cheaper than GPT-4o), fast response times (~1–2s), and sufficient intelligence for structured classification. |
-| **In-memory storage** | Zero setup for prototyping; no database configuration needed. The `history` list is trivial to swap for a database adapter later. |
-| **Nuxt UI / Tailwind** | Provides a beautiful, accessible, and fully responsive enterprise component library (cards, forms, badges, icons) out-of-the-box, replacing plain CSS. |
+| **Database** | SQLAlchemy and SQLite provide an enterprise-ready ORM setup. This is a massive upgrade from in-memory lists, ensuring data persistence while remaining zero-config for local development. |
+| **Nuxt UI / Tailwind** | Provides a beautiful, accessible, and fully responsive enterprise FinTech/Terminal aesthetic component library (cards, forms, badges, icons) out-of-the-box, replacing plain CSS. |
 | **Pinia** | The standard Vue state management library ensures global state is robustly managed, replacing simple reactive composables for scalability. |
 | **Dev proxy** | Avoids CORS complexity in development; production would use a reverse proxy (e.g., nginx) instead. |
 
@@ -282,6 +283,7 @@ This prototype is designed as a foundation. Here's how it could plug into larger
 - **Prompt engineering** — Detailed system prompt with category definitions, examples, priority rules, and structured output enforcement.
 - **Comprehensive error handling** — Graceful handling of empty input, oversized input, vague content, and all OpenAI SDK error classes.
 - **Automation potential** — Architecture designed for extensibility with clear integration points documented above.
+- **Rate Limiting** — Integrated `slowapi` on the backend to prevent API abuse (limits endpoints to 5 requests/minute per IP) with graceful UI error handling.
 - **Sentiment analysis** — Beyond classification, the model also assesses emotional tone.
 - **Priority assignment** — Rule-based priority framework baked into the prompt.
 - **Recommended actions** — Actionable next steps generated for staff, not just a classification label.
