@@ -35,9 +35,10 @@ export const useEnquiryStore = defineStore('enquiry', () => {
   async function submitEnquiry(text: string): Promise<void> {
     loading.value = true
     error.value = null
+    const config = useRuntimeConfig()
 
     try {
-      const response = await $fetch<ApiAnalyseResponse>('http://localhost:5000/api/analyse', {
+      const response = await $fetch<ApiAnalyseResponse>(`${config.public.apiBase}/analyse`, {
         method: 'POST',
         body: { enquiry: text }
       })
@@ -68,8 +69,9 @@ export const useEnquiryStore = defineStore('enquiry', () => {
   }
 
   async function fetchHistory(): Promise<void> {
+    const config = useRuntimeConfig()
     try {
-      const response = await $fetch<ApiHistoryResponse>('http://localhost:5000/api/history')
+      const response = await $fetch<ApiHistoryResponse>(`${config.public.apiBase}/history`)
       history.value = response.data.map((entry: ApiAnalyseResponse) => ({
         ...entry.data,
         enquiry: entry.enquiry,

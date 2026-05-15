@@ -13,10 +13,16 @@ class Settings(BaseSettings):
     OPENAI_TEMPERATURE: float = 0.3
 
     # Database Config
+    # Defaulting to SQLite for local dev, but easily overridden with Supabase Postgres URL in .env
     DATABASE_URL: str = "sqlite:///./enterprise_app.db"
 
     # CORS Config
-    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001"]
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "http://localhost:3000", 
+        "http://localhost:3001",
+        "https://ai-developer-ab5f9.web.app",
+        "https://ai-developer-ab5f9.firebaseapp.com"
+    ]
 
     # Input Constraints
     MAX_INPUT_LENGTH: int = 5000
