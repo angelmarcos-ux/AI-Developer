@@ -26,12 +26,11 @@ def create_app() -> FastAPI:
         redoc_url=f"{settings.API_V1_STR}/redoc",
     )
 
-    # Set up CORS - Allow all origins for the Vercel deployment since frontend and backend share a domain
-    # and Vercel generates dynamic preview URLs
+    # Set up CORS
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
-        allow_credentials=False, # Must be false when allow_origins is ["*"]
+        allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
     )
