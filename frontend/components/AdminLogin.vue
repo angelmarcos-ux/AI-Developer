@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 
 const auth = useAuthStore()
-const password = ref('')
+const password = ref('admin123')
 const error = ref('')
 
 function handleLogin() {
