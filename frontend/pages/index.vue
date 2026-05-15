@@ -60,9 +60,31 @@ const urgentAlertsList = computed(() => {
 })
 
 // Settings Data
-const modelVersion = ref('gpt-4o-mini')
-const rateLimit = ref(5)
-const isMaintenanceMode = ref(false)
+const newPassword = ref('')
+const confirmPassword = ref('')
+const passwordChangeSuccess = ref(false)
+const passwordChangeError = ref('')
+
+function handlePasswordChange() {
+  passwordChangeSuccess.value = false
+  passwordChangeError.value = ''
+  
+  if (newPassword.value !== confirmPassword.value) {
+    passwordChangeError.value = 'Passwords do not match'
+    return
+  }
+  
+  if (authStore.changePassword(newPassword.value)) {
+    passwordChangeSuccess.value = true
+    newPassword.value = ''
+    confirmPassword.value = ''
+    setTimeout(() => {
+      passwordChangeSuccess.value = false
+    }, 3000)
+  } else {
+    passwordChangeError.value = 'Password must be at least 6 characters long'
+  }
+}
 
 </script>
 
@@ -289,25 +311,38 @@ const isMaintenanceMode = ref(false)
             <div class="max-w-2xl mx-auto">
               <UCard :ui="{ background: 'bg-gray-950', ring: 'ring-1 ring-gray-800' }">
                 <template #header>
-                  <h3 class="text-lg font-medium text-white font-mono">System Configuration</h3>
+                  <h3 class="text-lg font-medium text-white font-mono flex items-center gap-2">
+                    <UIcon name="i-heroicons-shield-check" class="text-primary-500 w-5 h-5" />
+                    Security Settings
+                  </h3>
                 </template>
-                <div class="space-y-6">
-                  <UFormGroup label="AI Model Engine" description="Select the underlying language model for analysis">
-                    <USelect v-model="modelVersion" :options="['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo']" />
-                  </UFormGroup>
+                <form @submit.prevent="handlePasswordChange" class="space-y-6">
+                  <div>
+                    <h4 class="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider font-mono">Change Admin Password</h4>
+                    
+                    <div class="space-y-4">
+                      <UFormGroup label="New Password">
+                        <UInput v-model="newPassword" type="password" icon="i-heroicons-key" placeholder="Enter new password" />
+                      </UFormGroup>
+                      
+                      <UFormGroup label="Confirm Password">
+                        <UInput v-model="confirmPassword" type="password" icon="i-heroicons-key" placeholder="Confirm new password" />
+                      </UFormGroup>
+                    </div>
+                  </div>
                   
-                  <UFormGroup label="Rate Limit (req/min)" description="Maximum requests allowed per IP address">
-                    <UInput v-model="rateLimit" type="number" />
-                  </UFormGroup>
+                  <div v-if="passwordChangeSuccess" class="p-3 bg-green-900/20 border border-green-900/50 rounded text-green-400 text-sm font-mono">
+                    Password updated successfully!
+                  </div>
                   
-                  <UFormGroup label="Maintenance Mode" description="Disable public access to the enquiry form">
-                    <UToggle v-model="isMaintenanceMode" />
-                  </UFormGroup>
+                  <div v-if="passwordChangeError" class="p-3 bg-red-900/20 border border-red-900/50 rounded text-red-400 text-sm font-mono">
+                    {{ passwordChangeError }}
+                  </div>
                   
                   <div class="pt-4 border-t border-gray-800 flex justify-end">
-                    <UButton color="primary" class="font-mono">SAVE CONFIGURATION</UButton>
+                    <UButton type="submit" color="primary" class="font-mono">UPDATE PASSWORD</UButton>
                   </div>
-                </div>
+                </form>
               </UCard>
             </div>
           </template>
