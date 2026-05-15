@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 
 const auth = useAuthStore()
-const password = ref('admin123')
+const password = ref('')
 const error = ref('')
+
+const showHint = computed(() => auth.currentPassword === 'admin123')
 
 function handleLogin() {
   if (auth.login(password.value)) {
     error.value = ''
   } else {
-    error.value = 'Invalid authorization key. Try "admin123".'
+    error.value = showHint.value ? 'Invalid authorization key. Try "admin123".' : 'Invalid authorization key. Password has been changed.'
   }
 }
 </script>
@@ -38,6 +40,7 @@ function handleLogin() {
             class="w-full"
           />
         </div>
+        <p v-if="showHint" class="text-gray-500 text-xs font-mono text-center">Hint: admin123</p>
         <p v-if="error" class="text-red-500 text-xs font-mono text-center">{{ error }}</p>
         <UButton
           type="submit"
