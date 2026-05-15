@@ -86,6 +86,19 @@ export const useEnquiryStore = defineStore('enquiry', () => {
     result.value = item
   }
 
+  async function clearHistory(): Promise<void> {
+    const config = useRuntimeConfig()
+    try {
+      await $fetch(`${config.public.apiBase}/history`, {
+        method: 'DELETE'
+      })
+      history.value = []
+      result.value = null
+    } catch (err: any) {
+      console.error('Failed to clear history:', err)
+    }
+  }
+
   return {
     result,
     history,
@@ -93,6 +106,7 @@ export const useEnquiryStore = defineStore('enquiry', () => {
     error,
     submitEnquiry,
     fetchHistory,
-    selectHistoryItem
+    selectHistoryItem,
+    clearHistory
   }
 })

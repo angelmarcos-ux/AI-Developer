@@ -87,6 +87,21 @@ def get_history(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
         data=history_data
     )
 
+@router.delete("/history")
+def delete_history(db: Session = Depends(get_db)):
+    logger.info("Clearing analysis history.")
+    try:
+        db.query(EnquiryAnalysis).delete()
+        db.commit()
+        return {"success": True, "message": "History cleared"}
+    except Exception as e:
+        logger.error(f"Failed to clear history: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to clear history"
+        )
+
 @router.get("/health")
 def health():
     return {"status": "healthy"}

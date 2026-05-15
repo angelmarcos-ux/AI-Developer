@@ -53,7 +53,7 @@ function isActive(item: AnalysisResult): boolean {
             color="gray" 
             variant="ghost" 
             size="2xs" 
-            @click.stop="store.history = []; store.result = null"
+            @click.stop="store.clearHistory()"
             title="Clear History"
           />
         </div>
