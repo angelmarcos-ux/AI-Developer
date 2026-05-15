@@ -17,42 +17,36 @@ logger.add(sys.stderr, format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <leve
 # Initialize Database tables
 Base.metadata.create_all(bind=engine)
 
-def create_app() -> FastAPI:
-    app = FastAPI(
-        title=settings.PROJECT_NAME,
-        version=settings.VERSION,
-        openapi_url=f"{settings.API_V1_STR}/openapi.json",
-        docs_url=f"{settings.API_V1_STR}/docs",
-        redoc_url=f"{settings.API_V1_STR}/redoc",
-    )
+# FastAPI Application Initialization
+app = FastAPI(
+    title="AI Developer API",
+    description="Backend services for the AI Developer application",
+    version="1.0.0"
+)
 
-    # Set up CORS
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=False,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+# Set up CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-    # Attach rate limiter state and exception handler
-    app.state.limiter = limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+# Attach rate limiter state and exception handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-    # Include routers
-    app.include_router(api_router, prefix=settings.API_V1_STR)
+# Include routers
+app.include_router(routers.router, prefix="/api")
 
-    @app.on_event("startup")
-    async def startup_event():
-        logger.info(f"Starting up {settings.PROJECT_NAME}...")
+@app.on_event("startup")
+async def startup_event():
+    logger.info(f"Starting up API...")
 
-    @app.on_event("shutdown")
-    async def shutdown_event():
-        logger.info(f"Shutting down {settings.PROJECT_NAME}...")
-
-    return app
-
-app = create_app()
+@app.on_event("shutdown")
+async def shutdown_event():
+    logger.info(f"Shutting down API...")
 
 if __name__ == "__main__":
     import uvicorn
