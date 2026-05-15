@@ -1,15 +1,15 @@
 {
   "version": 2,
-  "experimentalServices": {
-    "frontend": {
-      "src": "frontend",
-      "use": "@nuxtjs/vercel-builder"
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build"
     },
-    "backend": {
+    {
       "src": "backend/main.py",
       "use": "@vercel/python"
     }
-  },
+  ],
   "routes": [
     {
       "src": "/api/(.*)",
@@ -17,7 +17,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "frontend"
+      "dest": "frontend/$1"
     }
   ]
 }
