@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
 import { useEnquiryStore } from '~/stores/enquiry'
+import { useAuthStore } from '~/stores/auth'
+import AdminLogin from '~/components/AdminLogin.vue'
 
 const store = useEnquiryStore()
+const authStore = useAuthStore()
 const apiHealthy = ref<boolean | null>(null)
 
 onMounted(async () => {
@@ -33,10 +36,41 @@ const navigation = computed(() => [
   { name: 'Alerts', icon: 'i-heroicons-bell', current: currentTab.value === 'Alerts', badge: urgentEnquiries.value },
   { name: 'Settings', icon: 'i-heroicons-cog-8-tooth', current: currentTab.value === 'Settings' },
 ])
+
+// Analytics Computed Data
+const categoryDistribution = computed(() => {
+  const counts: Record<string, number> = {}
+  store.history.forEach(h => {
+    counts[h.data.category] = (counts[h.data.category] || 0) + 1
+  })
+  return Object.entries(counts).map(([name, count]) => ({ name, count }))
+})
+
+const priorityDistribution = computed(() => {
+  const counts: Record<string, number> = {}
+  store.history.forEach(h => {
+    counts[h.data.priority] = (counts[h.data.priority] || 0) + 1
+  })
+  return Object.entries(counts).map(([name, count]) => ({ name, count }))
+})
+
+// Alerts Computed Data
+const urgentAlertsList = computed(() => {
+  return store.history.filter(h => h.data.priority?.toLowerCase() === 'urgent')
+})
+
+// Settings Data
+const modelVersion = ref('gpt-4o-mini')
+const rateLimit = ref(5)
+const isMaintenanceMode = ref(false)
+
 </script>
 
 <template>
-  <div class="flex h-screen bg-gray-900 text-gray-100 overflow-hidden font-sans">
+  <div v-if="!authStore.isAuthenticated">
+    <AdminLogin />
+  </div>
+  <div v-else class="flex h-screen bg-gray-900 text-gray-100 overflow-hidden font-sans">
     <!-- Sidebar -->
     <aside class="w-16 md:w-64 flex-shrink-0 bg-gray-950 border-r border-gray-800 flex flex-col transition-all duration-300">
       <div class="h-16 flex items-center justify-center md:justify-start md:px-6 border-b border-gray-800">
@@ -55,12 +89,22 @@ const navigation = computed(() => [
           </span>
         </a>
       </nav>
-      <div class="p-4 border-t border-gray-800 flex justify-center md:justify-start items-center">
-        <UAvatar src="https://avatars.githubusercontent.com/u/739984?v=4" alt="User" size="sm" />
-        <div class="ml-3 hidden md:block">
-          <p class="text-sm font-medium text-white">Lead Dev</p>
-          <p class="text-xs text-gray-500">System Admin</p>
+      <div class="p-4 border-t border-gray-800 flex justify-between md:justify-start items-center">
+        <div class="flex items-center">
+          <UAvatar src="https://avatars.githubusercontent.com/u/739984?v=4" alt="User" size="sm" />
+          <div class="ml-3 hidden md:block">
+            <p class="text-sm font-medium text-white">{{ authStore.user?.name || 'Lead Dev' }}</p>
+            <p class="text-xs text-gray-500">{{ authStore.user?.role || 'System Admin' }}</p>
+          </div>
         </div>
+        <UButton 
+          icon="i-heroicons-arrow-right-on-rectangle" 
+          color="gray" 
+          variant="ghost" 
+          size="sm" 
+          class="hidden md:flex ml-auto"
+          @click="authStore.logout()"
+        />
       </div>
     </aside>
 
@@ -169,26 +213,102 @@ const navigation = computed(() => [
           </template>
 
           <template v-else-if="currentTab === 'Analytics'">
-            <div class="flex flex-col items-center justify-center h-96 border-2 border-dashed border-gray-800 rounded-lg">
-              <UIcon name="i-heroicons-chart-bar" class="w-12 h-12 text-gray-600 mb-4" />
-              <h2 class="text-lg font-mono text-gray-400 uppercase tracking-widest">Analytics Dashboard</h2>
-              <p class="text-sm text-gray-600 mt-2">Data visualization module offline or under construction.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <UCard :ui="{ background: 'bg-gray-950', ring: 'ring-1 ring-gray-800' }">
+                <template #header>
+                  <h3 class="text-lg font-medium text-white font-mono">Category Distribution</h3>
+                </template>
+                <div class="space-y-4">
+                  <div v-for="item in categoryDistribution" :key="item.name" class="flex items-center justify-between">
+                    <span class="text-sm text-gray-400">{{ item.name }}</span>
+                    <div class="flex items-center gap-3 w-1/2">
+                      <div class="h-2 flex-1 bg-gray-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-blue-500" :style="{ width: `${(item.count / totalEnquiries) * 100}%` }"></div>
+                      </div>
+                      <span class="text-sm font-bold text-white w-8 text-right">{{ item.count }}</span>
+                    </div>
+                  </div>
+                  <div v-if="categoryDistribution.length === 0" class="text-sm text-gray-500 text-center py-4">No data available</div>
+                </div>
+              </UCard>
+              
+              <UCard :ui="{ background: 'bg-gray-950', ring: 'ring-1 ring-gray-800' }">
+                <template #header>
+                  <h3 class="text-lg font-medium text-white font-mono">Priority Distribution</h3>
+                </template>
+                <div class="space-y-4">
+                  <div v-for="item in priorityDistribution" :key="item.name" class="flex items-center justify-between">
+                    <span class="text-sm text-gray-400 capitalize">{{ item.name }}</span>
+                    <div class="flex items-center gap-3 w-1/2">
+                      <div class="h-2 flex-1 bg-gray-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-primary-500" :style="{ width: `${(item.count / totalEnquiries) * 100}%` }"></div>
+                      </div>
+                      <span class="text-sm font-bold text-white w-8 text-right">{{ item.count }}</span>
+                    </div>
+                  </div>
+                  <div v-if="priorityDistribution.length === 0" class="text-sm text-gray-500 text-center py-4">No data available</div>
+                </div>
+              </UCard>
             </div>
           </template>
 
           <template v-else-if="currentTab === 'Alerts'">
-            <div class="flex flex-col items-center justify-center h-96 border-2 border-dashed border-gray-800 rounded-lg">
-              <UIcon name="i-heroicons-bell-alert" class="w-12 h-12 text-gray-600 mb-4" />
-              <h2 class="text-lg font-mono text-gray-400 uppercase tracking-widest">System Alerts</h2>
-              <p class="text-sm text-gray-600 mt-2">No active system anomalies detected.</p>
-            </div>
+            <UCard :ui="{ background: 'bg-gray-950', ring: 'ring-1 ring-gray-800' }">
+              <template #header>
+                <div class="flex items-center justify-between">
+                  <h3 class="text-lg font-medium text-white font-mono flex items-center gap-2">
+                    <UIcon name="i-heroicons-exclamation-triangle" class="text-red-500 w-5 h-5" />
+                    Urgent Alerts
+                  </h3>
+                  <UBadge color="red" variant="subtle">{{ urgentAlertsList.length }} Active</UBadge>
+                </div>
+              </template>
+              <div v-if="urgentAlertsList.length > 0" class="space-y-4">
+                <div v-for="alert in urgentAlertsList" :key="alert.timestamp" class="p-4 border border-red-900/50 bg-red-950/20 rounded-lg">
+                  <div class="flex justify-between items-start mb-2">
+                    <span class="text-xs font-mono text-red-400">{{ new Date(alert.timestamp).toLocaleString() }}</span>
+                    <UBadge color="red" size="sm">URGENT</UBadge>
+                  </div>
+                  <p class="text-sm text-gray-300 mb-3">{{ alert.enquiry }}</p>
+                  <div class="bg-gray-900 p-3 rounded text-sm border border-gray-800">
+                    <strong class="text-gray-400 block mb-1">Recommended Action:</strong>
+                    <ul class="list-disc pl-5 text-gray-300 space-y-1">
+                      <li v-for="(action, i) in alert.data.recommended_actions" :key="i">{{ action }}</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="flex flex-col items-center justify-center py-12">
+                <UIcon name="i-heroicons-check-circle" class="w-12 h-12 text-green-500 mb-4" />
+                <p class="text-gray-400 font-mono">No active system anomalies detected.</p>
+              </div>
+            </UCard>
           </template>
 
           <template v-else-if="currentTab === 'Settings'">
-            <div class="flex flex-col items-center justify-center h-96 border-2 border-dashed border-gray-800 rounded-lg">
-              <UIcon name="i-heroicons-cog" class="w-12 h-12 text-gray-600 mb-4" />
-              <h2 class="text-lg font-mono text-gray-400 uppercase tracking-widest">Terminal Settings</h2>
-              <p class="text-sm text-gray-600 mt-2">Configuration parameters locked by administrator.</p>
+            <div class="max-w-2xl mx-auto">
+              <UCard :ui="{ background: 'bg-gray-950', ring: 'ring-1 ring-gray-800' }">
+                <template #header>
+                  <h3 class="text-lg font-medium text-white font-mono">System Configuration</h3>
+                </template>
+                <div class="space-y-6">
+                  <UFormGroup label="AI Model Engine" description="Select the underlying language model for analysis">
+                    <USelect v-model="modelVersion" :options="['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo']" />
+                  </UFormGroup>
+                  
+                  <UFormGroup label="Rate Limit (req/min)" description="Maximum requests allowed per IP address">
+                    <UInput v-model="rateLimit" type="number" />
+                  </UFormGroup>
+                  
+                  <UFormGroup label="Maintenance Mode" description="Disable public access to the enquiry form">
+                    <UToggle v-model="isMaintenanceMode" />
+                  </UFormGroup>
+                  
+                  <div class="pt-4 border-t border-gray-800 flex justify-end">
+                    <UButton color="primary" class="font-mono">SAVE CONFIGURATION</UButton>
+                  </div>
+                </div>
+              </UCard>
             </div>
           </template>
 
