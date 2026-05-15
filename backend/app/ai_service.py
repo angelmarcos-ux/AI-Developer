@@ -5,7 +5,9 @@ from loguru import logger
 from app.config import settings
 
 # Initialise Async OpenAI client
-client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+client = None
+if settings.OPENAI_API_KEY:
+    client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
 SYSTEM_PROMPT = f"""You are an expert business enquiry analyst for a professional services firm.
 
@@ -59,6 +61,8 @@ If the input is vague, nonsensical, or not a genuine client enquiry, still class
     before_sleep=lambda retry_state: logger.warning(f"Retrying OpenAI API call: attempt {retry_state.attempt_number}")
 )
 async def call_openai_api(text: str) -> dict:
+    if not client:
+        raise ValueError("OpenAI API key not configured")
     response = await client.chat.completions.create(
         model=settings.OPENAI_MODEL,
         temperature=settings.OPENAI_TEMPERATURE,
@@ -100,6 +104,9 @@ async def analyse_enquiry(text: str) -> dict:
             "data": result,
         }
 
+    except ValueError as e:
+        logger.error(str(e))
+        return {"success": False, "error": str(e)}
     except AuthenticationError:
         logger.error("OpenAI authentication failed.")
         return {"success": False, "error": "OpenAI authentication failed. Please check your API key."}
