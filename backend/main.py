@@ -2,16 +2,14 @@ import sys
 import os
 import logging
 
-# Ensure the backend directory is in the Python path
+# Ensure the root and backend directory are in the Python path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
-
-# Add the parent directory of 'backend' to sys.path to resolve 'app' module
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from app.config import settings
 from app.database import Base, engine
