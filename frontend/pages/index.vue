@@ -8,7 +8,8 @@ const apiHealthy = ref<boolean | null>(null)
 onMounted(async () => {
   store.fetchHistory()
   try {
-    const res = await $fetch<{ status: string }>('http://localhost:5000/api/health')
+    const config = useRuntimeConfig()
+    const res = await $fetch<{ status: string }>(`${config.public.apiBase}/health`)
     apiHealthy.value = res?.status === 'healthy'
   } catch {
     apiHealthy.value = false
