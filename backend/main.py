@@ -1,18 +1,17 @@
 import sys
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from loguru import logger
 
 from app.config import settings
-from app.database import engine, Base
-from app.routers import router as api_router
-from app.routers import limiter
+from app.database import Base, engine
+from app import routers
 
-# Setup structured logging
-logger.remove()
-logger.add(sys.stderr, format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>")
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Initialize Database tables
 Base.metadata.create_all(bind=engine)
@@ -33,20 +32,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Attach rate limiter state and exception handler
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-
 # Include routers
 app.include_router(routers.router, prefix="/api")
 
 @app.on_event("startup")
 async def startup_event():
-    logger.info(f"Starting up API...")
+    logger.info("Starting up API...")
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    logger.info(f"Shutting down API...")
+    logger.info("Shutting down API...")
 
 if __name__ == "__main__":
     import uvicorn
