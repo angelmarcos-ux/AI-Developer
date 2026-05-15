@@ -41,7 +41,7 @@ const navigation = computed(() => [
 const categoryDistribution = computed(() => {
   const counts: Record<string, number> = {}
   store.history.forEach(h => {
-    counts[h.data.category] = (counts[h.data.category] || 0) + 1
+    counts[h.category] = (counts[h.category] || 0) + 1
   })
   return Object.entries(counts).map(([name, count]) => ({ name, count }))
 })
@@ -49,14 +49,14 @@ const categoryDistribution = computed(() => {
 const priorityDistribution = computed(() => {
   const counts: Record<string, number> = {}
   store.history.forEach(h => {
-    counts[h.data.priority] = (counts[h.data.priority] || 0) + 1
+    counts[h.priority] = (counts[h.priority] || 0) + 1
   })
   return Object.entries(counts).map(([name, count]) => ({ name, count }))
 })
 
 // Alerts Computed Data
 const urgentAlertsList = computed(() => {
-  return store.history.filter(h => h.data.priority?.toLowerCase() === 'urgent')
+  return store.history.filter(h => h.priority?.toLowerCase() === 'urgent')
 })
 
 // Settings Data
@@ -266,14 +266,14 @@ const isMaintenanceMode = ref(false)
               <div v-if="urgentAlertsList.length > 0" class="space-y-4">
                 <div v-for="alert in urgentAlertsList" :key="alert.timestamp" class="p-4 border border-red-900/50 bg-red-950/20 rounded-lg">
                   <div class="flex justify-between items-start mb-2">
-                    <span class="text-xs font-mono text-red-400">{{ new Date(alert.timestamp).toLocaleString() }}</span>
+                    <span class="text-xs font-mono text-red-400">{{ alert.timestamp ? new Date(alert.timestamp).toLocaleString() : 'Unknown Date' }}</span>
                     <UBadge color="red" size="sm">URGENT</UBadge>
                   </div>
                   <p class="text-sm text-gray-300 mb-3">{{ alert.enquiry }}</p>
                   <div class="bg-gray-900 p-3 rounded text-sm border border-gray-800">
                     <strong class="text-gray-400 block mb-1">Recommended Action:</strong>
                     <ul class="list-disc pl-5 text-gray-300 space-y-1">
-                      <li v-for="(action, i) in alert.data.recommended_actions" :key="i">{{ action }}</li>
+                      <li v-for="(action, i) in alert.recommended_actions" :key="i">{{ action }}</li>
                     </ul>
                   </div>
                 </div>
